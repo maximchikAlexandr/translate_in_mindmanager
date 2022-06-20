@@ -1,0 +1,204 @@
+'#Language "WWB-COM"
+
+Option Explicit
+
+Sub Main
+	Dim active_topic As Topic
+	Dim word$, json$, text_of_note$, json_text_with_audio$
+	Dim link_str$
+	Dim URL_arr() As Variant
+
+	For Each active_topic In ActiveDocument.Range(mmRangeAllTopics, True)
+		If active_topic.IsSelected = True Then
+			word = active_topic.Text
+			json = getJsonYandexDictonary(word, "en", "ru")
+			text_of_note = get_transcription(json) & " – " & get_synonim(get_translate_word(json),json)
+			active_topic.Notes.Insert(text_of_note)
+
+			json_text_with_audio = get_json_dictionaryapi(word)
+    		ReDim URL_arr(0)
+    		URL_arr = get_URL_of_audio(json_text_with_audio)
+
+			link_str = URL_arr(0)
+
+			If link_str <> "" Then active_topic.CreateHyperlink(link_str)
+
+			Call set_font(active_topic)
+		End If
+	Next
+
+End Sub
+
+
+'=============================================================================
+'Объектная модель MindManager
+'=============================================================================
+'Функция возвращает выделенный топик
+Function get_active_topic() As Topic
+	Dim m_Topic As Topic
+	For Each m_Topic In ActiveDocument.Range(mmRangeAllTopics, True)
+		If m_Topic.IsSelected = True Then
+			Set get_active_topic = m_Topic
+			Exit For
+		End If
+	Next
+End Function
+
+Private Sub set_font(target_topic As Topic)
+	With target_topic.Notes
+		.SetSelection(1, 1000)
+		.Font.Name = "Times New Roman"
+		.Font.Size = 14
+	End With
+End Sub
+'=============================================================================
+
+'=============================================================================
+'Получение JSON файлов
+'=============================================================================
+'Склеиваем URL, отправляем запрос в ЯндексСловарь и получаем ответ в формате JSON
+Function getJsonYandexDictonary(findWord As Variant, original_language$, target_language$) As String
+    Dim yandexDictonaryKey$
+    yandexDictonaryKey = "ключ" ' копируем сюда ключ
+    Dim URL$
+    URL = "https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=" & yandexDictonaryKey & "&lang=" & original_language & "-" & target_language & "&text=" & findWord
+    getJsonYandexDictonary = getTextCodeWebPage(URL)
+End Function
+Function get_json_dictionaryapi(findWord As Variant) As String
+    Dim URL$
+    URL = "https://api.dictionaryapi.dev/api/v2/entries/en/" & findWord
+    get_json_dictionaryapi = getTextCodeWebPage(URL)
+End Function
+
+'=============================================================================
+'Получение текста веб страницы по URL через GET запрос
+'=============================================================================
+Function getTextCodeWebPage(URL$) As String
+    ' текст кода веб страницы
+    Dim TextCodeWebPage$
+    'HTTP-страница, скрипт на языке JScript, объект json
+    Dim XMLHTTP As Object
+
+    'Работа с HTTP страницей____________________________________________________________________________________________
+    Set XMLHTTP = CreateObject("MSXML2.XMLHTTP")
+    With XMLHTTP
+        .Open "GET", URL, False    'ложь - ждем ответа сайта, макрос не продолжается. истина - не ждем
+        'и продолжаем ответ. GET - получение информации,POST - отправить информацию
+        .Send
+        getTextCodeWebPage = .ResponseText             'загружаем в текстовую перменную код страницы
+    End With
+    Set XMLHTTP = Nothing    ' обнуляем переменные
+End Function
+
+
+
+'=============================================================================
+'Parsing of JSON files. High-level function
+'=============================================================================
+Public Function get_translate_word(json_text As String) As String
+        Dim codeJS_Function$
+        codeJS_Function = "function GetData (jstruct) {return jstruct.def[0].tr[0].text;}"
+        get_translate_word = parse_json(json_text, codeJS_Function)
+End Function
+
+Public Function get_transcription(json_text As String) As String
+        Dim codeJS_Function$
+        codeJS_Function = "function GetData (jstruct) {return jstruct.def[0].ts;}"
+        get_transcription = parse_json(json_text, codeJS_Function)
+
+        If get_transcription <> "" Then     ' Если транскрипция существует, обрамляем ее квадратными скобаками
+            get_transcription = "[" & get_transcription & "]"
+        End If
+End Function
+
+Public Function get_synonim(TranslateWord As String, json_text As String) As String
+    Dim Synonim$, codeJS_Function$
+    Dim j&
+        'Если перевод слова есть, то выгружаем из json объекта синонимы
+        If TranslateWord <> "" Then
+            For j = 0 To 50
+                On Error GoTo ExitFor
+                codeJS_Function = "function GetData (jstruct) {return jstruct.def[0].tr[0].syn[" & j & "].text;}"
+                Synonim = parse_json(json_text, codeJS_Function)
+                If Synonim <> "" Then
+                    TranslateWord = TranslateWord & ", " & Synonim
+                End If
+            Next j
+ExitFor:
+        End If
+
+        get_synonim = TranslateWord
+End Function
+
+Public Function get_URL_of_audio(json_text As String) As Variant
+
+        Dim URL$, codeJS_Function$
+        Dim j&
+        Dim URL_arr() As Variant
+        ReDim URL_arr(0)
+        'Если перевод слова есть, то выгружаем из json объекта синонимы
+            For j = 0 To 5
+                On Error GoTo ExitFor
+                codeJS_Function = "function GetData (jstruct) {return jstruct[0].phonetics[" & j & "].audio;}"
+                URL = parse_json(json_text, codeJS_Function)
+                If URL <> "" Then URL_arr = Append(URL_arr, URL)
+            Next j
+ExitFor:
+        get_URL_of_audio = URL_arr
+End Function
+
+
+
+'=============================================================================
+'Parsing of JSON files. low-level function
+'=============================================================================
+Private Function parse_json(textJsonFile$, codeJS_Function$) As String
+    On Error Resume Next
+    'Работа с JSскрипт_________________________________________________________________________________________________
+    Dim myJSCript As Object
+    Set myJSCript = CreateObject("MSScriptControl.ScriptControl")
+    With myJSCript
+        .Language = "JScript"
+        Dim objJson As Object
+        Set objJson = .Eval("(" + textJsonFile + ")")
+        .AddCode codeJS_Function
+        parse_json = .Run("GetData", objJson)
+    End With
+
+    Set myJSCript = Nothing
+    Set objJson = Nothing    ' обнуляем переменные
+End Function
+
+'=============================================================================
+'Arrays
+'=============================================================================
+'1. Проверка наличия элемента массива в массиве.
+'true – элемент уже есть в массиве, false – элемента нет
+Function checkElementArr(arr() As Variant, elementArr$) As Boolean
+    Dim countElementArr&, i&
+    countElementArr = UBound(arr) - LBound(arr)
+
+    For i = 0 To countElementArr
+        If arr(i) = elementArr Then
+            checkElementArr = True
+            Exit Function
+        End If
+    Next i
+
+    checkElementArr = False
+End Function
+
+'2. Функция добавляет в массив неповторяющиеся, уникальные значения
+Function Append(InArray() As Variant, Value As String)                          'InArray - массив, Value - элемент, который необходимо добавить к нему
+
+    If checkElementArr(InArray, Value) = False Then
+        If InArray(0) <> "" Then
+            ReDim Preserve InArray(UBound(InArray) + 1)                         'увеличиваем размер массива с сохранением имеющихся в нём значений
+            InArray(UBound(InArray)) = Value                                    'дописываем Value в массив
+        Else
+            InArray(0) = Value
+        End If
+    End If
+
+    Append = InArray                                                            'функция возвращает новый массив
+End Function
