@@ -31,9 +31,9 @@ End Sub
 
 
 '=============================================================================
-'Îáúåêòíàÿ ìîäåëü MindManager
+'object model MindManager
 '=============================================================================
-'Ôóíêöèÿ âîçâðàùàåò âûäåëåííûé òîïèê
+'return active topic
 Function get_active_topic() As Topic
 	Dim m_Topic As Topic
 	For Each m_Topic In ActiveDocument.Range(mmRangeAllTopics, True)
@@ -54,12 +54,12 @@ End Sub
 '=============================================================================
 
 '=============================================================================
-'Ïîëó÷åíèå JSON ôàéëîâ
+'JSON files
 '=============================================================================
-'Ñêëåèâàåì URL, îòïðàâëÿåì çàïðîñ â ßíäåêñÑëîâàðü è ïîëó÷àåì îòâåò â ôîðìàòå JSON
+' return json format from yandex dictonary
 Function getJsonYandexDictonary(findWord As Variant, original_language$, target_language$) As String
     Dim yandexDictonaryKey$
-    yandexDictonaryKey = "êëþ÷" ' êîïèðóåì ñþäà êëþ÷
+    yandexDictonaryKey = "key" ' input your key
     Dim URL$
     URL = "https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=" & yandexDictonaryKey & "&lang=" & original_language & "-" & target_language & "&text=" & findWord
     getJsonYandexDictonary = getTextCodeWebPage(URL)
@@ -71,23 +71,19 @@ Function get_json_dictionaryapi(findWord As Variant) As String
 End Function
 
 '=============================================================================
-'Ïîëó÷åíèå òåêñòà âåá ñòðàíèöû ïî URL ÷åðåç GET çàïðîñ
+'Return text of web page from GET query
 '=============================================================================
 Function getTextCodeWebPage(URL$) As String
-    ' òåêñò êîäà âåá ñòðàíèöû
     Dim TextCodeWebPage$
-    'HTTP-ñòðàíèöà, ñêðèïò íà ÿçûêå JScript, îáúåêò json
     Dim XMLHTTP As Object
 
-    'Ðàáîòà ñ HTTP ñòðàíèöåé____________________________________________________________________________________________
     Set XMLHTTP = CreateObject("MSXML2.XMLHTTP")
     With XMLHTTP
-        .Open "GET", URL, False    'ëîæü - æäåì îòâåòà ñàéòà, ìàêðîñ íå ïðîäîëæàåòñÿ. èñòèíà - íå æäåì
-        'è ïðîäîëæàåì îòâåò. GET - ïîëó÷åíèå èíôîðìàöèè,POST - îòïðàâèòü èíôîðìàöèþ
+        .Open "GET", URL, False
         .Send
-        getTextCodeWebPage = .ResponseText             'çàãðóæàåì â òåêñòîâóþ ïåðìåííóþ êîä ñòðàíèöû
+        getTextCodeWebPage = .ResponseText            
     End With
-    Set XMLHTTP = Nothing    ' îáíóëÿåì ïåðåìåííûå
+    Set XMLHTTP = Nothing
 End Function
 
 
@@ -106,7 +102,7 @@ Public Function get_transcription(json_text As String) As String
         codeJS_Function = "function GetData (jstruct) {return jstruct.def[0].ts;}"
         get_transcription = parse_json(json_text, codeJS_Function)
 
-        If get_transcription <> "" Then     ' Åñëè òðàíñêðèïöèÿ ñóùåñòâóåò, îáðàìëÿåì åå êâàäðàòíûìè ñêîáàêàìè
+        If get_transcription <> "" Then 
             get_transcription = "[" & get_transcription & "]"
         End If
 End Function
@@ -114,7 +110,6 @@ End Function
 Public Function get_synonim(TranslateWord As String, json_text As String) As String
     Dim Synonim$, codeJS_Function$
     Dim j&
-        'Åñëè ïåðåâîä ñëîâà åñòü, òî âûãðóæàåì èç json îáúåêòà ñèíîíèìû
         If TranslateWord <> "" Then
             For j = 0 To 50
                 On Error GoTo ExitFor
@@ -136,7 +131,6 @@ Public Function get_URL_of_audio(json_text As String) As Variant
         Dim j&
         Dim URL_arr() As Variant
         ReDim URL_arr(0)
-        'Åñëè ïåðåâîä ñëîâà åñòü, òî âûãðóæàåì èç json îáúåêòà ñèíîíèìû
             For j = 0 To 5
                 On Error GoTo ExitFor
                 codeJS_Function = "function GetData (jstruct) {return jstruct[0].phonetics[" & j & "].audio;}"
@@ -154,7 +148,7 @@ End Function
 '=============================================================================
 Private Function parse_json(textJsonFile$, codeJS_Function$) As String
     On Error Resume Next
-    'Ðàáîòà ñ JSñêðèïò_________________________________________________________________________________________________
+
     Dim myJSCript As Object
     Set myJSCript = CreateObject("MSScriptControl.ScriptControl")
     With myJSCript
@@ -166,14 +160,13 @@ Private Function parse_json(textJsonFile$, codeJS_Function$) As String
     End With
 
     Set myJSCript = Nothing
-    Set objJson = Nothing    ' îáíóëÿåì ïåðåìåííûå
+    Set objJson = Nothing    
 End Function
 
 '=============================================================================
 'Arrays
 '=============================================================================
-'1. Ïðîâåðêà íàëè÷èÿ ýëåìåíòà ìàññèâà â ìàññèâå.
-'true – ýëåìåíò óæå åñòü â ìàññèâå, false – ýëåìåíòà íåò
+'true – element exist in array, false - otherwise
 Function checkElementArr(arr() As Variant, elementArr$) As Boolean
     Dim countElementArr&, i&
     countElementArr = UBound(arr) - LBound(arr)
@@ -188,13 +181,13 @@ Function checkElementArr(arr() As Variant, elementArr$) As Boolean
     checkElementArr = False
 End Function
 
-'2. Ôóíêöèÿ äîáàâëÿåò â ìàññèâ íåïîâòîðÿþùèåñÿ, óíèêàëüíûå çíà÷åíèÿ
-Function Append(InArray() As Variant, Value As String)                          'InArray - ìàññèâ, Value - ýëåìåíò, êîòîðûé íåîáõîäèìî äîáàâèòü ê íåìó
+Add unique elements to array
+Function Append(InArray() As Variant, Value As String)                         
 
     If checkElementArr(InArray, Value) = False Then
         If InArray(0) <> "" Then
-            ReDim Preserve InArray(UBound(InArray) + 1)                         'óâåëè÷èâàåì ðàçìåð ìàññèâà ñ ñîõðàíåíèåì èìåþùèõñÿ â í¸ì çíà÷åíèé
-            InArray(UBound(InArray)) = Value                                    'äîïèñûâàåì Value â ìàññèâ
+            ReDim Preserve InArray(UBound(InArray) + 1)                         
+            InArray(UBound(InArray)) = Value                                    
         Else
             InArray(0) = Value
         End If
