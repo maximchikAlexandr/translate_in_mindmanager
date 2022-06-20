@@ -12,7 +12,7 @@ Sub Main
 		If active_topic.IsSelected = True Then
 			word = active_topic.Text
 			json = getJsonYandexDictonary(word, "en", "ru")
-			text_of_note = get_transcription(json) & " – " & get_synonim(get_translate_word(json),json)
+			text_of_note = get_transcription(json) & " вЂ“ " & get_synonim(get_translate_word(json),json)
 			active_topic.Notes.Insert(text_of_note)
 
 			json_text_with_audio = get_json_dictionaryapi(word)
@@ -31,9 +31,9 @@ End Sub
 
 
 '=============================================================================
-'Объектная модель MindManager
+'ГЋГЎГєГҐГЄГІГ­Г Гї Г¬Г®Г¤ГҐГ«Гј MindManager
 '=============================================================================
-'Функция возвращает выделенный топик
+'Г”ГіГ­ГЄГ¶ГЁГї ГўГ®Г§ГўГ°Г Г№Г ГҐГІ ГўГ»Г¤ГҐГ«ГҐГ­Г­Г»Г© ГІГ®ГЇГЁГЄ
 Function get_active_topic() As Topic
 	Dim m_Topic As Topic
 	For Each m_Topic In ActiveDocument.Range(mmRangeAllTopics, True)
@@ -54,12 +54,12 @@ End Sub
 '=============================================================================
 
 '=============================================================================
-'Получение JSON файлов
+'ГЏГ®Г«ГіГ·ГҐГ­ГЁГҐ JSON ГґГ Г©Г«Г®Гў
 '=============================================================================
-'Склеиваем URL, отправляем запрос в ЯндексСловарь и получаем ответ в формате JSON
+'Г‘ГЄГ«ГҐГЁГўГ ГҐГ¬ URL, Г®ГІГЇГ°Г ГўГ«ГїГҐГ¬ Г§Г ГЇГ°Г®Г± Гў ГџГ­Г¤ГҐГЄГ±Г‘Г«Г®ГўГ Г°Гј ГЁ ГЇГ®Г«ГіГ·Г ГҐГ¬ Г®ГІГўГҐГІ Гў ГґГ®Г°Г¬Г ГІГҐ JSON
 Function getJsonYandexDictonary(findWord As Variant, original_language$, target_language$) As String
     Dim yandexDictonaryKey$
-    yandexDictonaryKey = "ключ" ' копируем сюда ключ
+    yandexDictonaryKey = "ГЄГ«ГѕГ·" ' ГЄГ®ГЇГЁГ°ГіГҐГ¬ Г±ГѕГ¤Г  ГЄГ«ГѕГ·
     Dim URL$
     URL = "https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=" & yandexDictonaryKey & "&lang=" & original_language & "-" & target_language & "&text=" & findWord
     getJsonYandexDictonary = getTextCodeWebPage(URL)
@@ -71,23 +71,23 @@ Function get_json_dictionaryapi(findWord As Variant) As String
 End Function
 
 '=============================================================================
-'Получение текста веб страницы по URL через GET запрос
+'ГЏГ®Г«ГіГ·ГҐГ­ГЁГҐ ГІГҐГЄГ±ГІГ  ГўГҐГЎ Г±ГІГ°Г Г­ГЁГ¶Г» ГЇГ® URL Г·ГҐГ°ГҐГ§ GET Г§Г ГЇГ°Г®Г±
 '=============================================================================
 Function getTextCodeWebPage(URL$) As String
-    ' текст кода веб страницы
+    ' ГІГҐГЄГ±ГІ ГЄГ®Г¤Г  ГўГҐГЎ Г±ГІГ°Г Г­ГЁГ¶Г»
     Dim TextCodeWebPage$
-    'HTTP-страница, скрипт на языке JScript, объект json
+    'HTTP-Г±ГІГ°Г Г­ГЁГ¶Г , Г±ГЄГ°ГЁГЇГІ Г­Г  ГїГ§Г»ГЄГҐ JScript, Г®ГЎГєГҐГЄГІ json
     Dim XMLHTTP As Object
 
-    'Работа с HTTP страницей____________________________________________________________________________________________
+    'ГђГ ГЎГ®ГІГ  Г± HTTP Г±ГІГ°Г Г­ГЁГ¶ГҐГ©____________________________________________________________________________________________
     Set XMLHTTP = CreateObject("MSXML2.XMLHTTP")
     With XMLHTTP
-        .Open "GET", URL, False    'ложь - ждем ответа сайта, макрос не продолжается. истина - не ждем
-        'и продолжаем ответ. GET - получение информации,POST - отправить информацию
+        .Open "GET", URL, False    'Г«Г®Г¦Гј - Г¦Г¤ГҐГ¬ Г®ГІГўГҐГІГ  Г±Г Г©ГІГ , Г¬Г ГЄГ°Г®Г± Г­ГҐ ГЇГ°Г®Г¤Г®Г«Г¦Г ГҐГІГ±Гї. ГЁГ±ГІГЁГ­Г  - Г­ГҐ Г¦Г¤ГҐГ¬
+        'ГЁ ГЇГ°Г®Г¤Г®Г«Г¦Г ГҐГ¬ Г®ГІГўГҐГІ. GET - ГЇГ®Г«ГіГ·ГҐГ­ГЁГҐ ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГЁ,POST - Г®ГІГЇГ°Г ГўГЁГІГј ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГѕ
         .Send
-        getTextCodeWebPage = .ResponseText             'загружаем в текстовую перменную код страницы
+        getTextCodeWebPage = .ResponseText             'Г§Г ГЈГ°ГіГ¦Г ГҐГ¬ Гў ГІГҐГЄГ±ГІГ®ГўГіГѕ ГЇГҐГ°Г¬ГҐГ­Г­ГіГѕ ГЄГ®Г¤ Г±ГІГ°Г Г­ГЁГ¶Г»
     End With
-    Set XMLHTTP = Nothing    ' обнуляем переменные
+    Set XMLHTTP = Nothing    ' Г®ГЎГ­ГіГ«ГїГҐГ¬ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ
 End Function
 
 
@@ -106,7 +106,7 @@ Public Function get_transcription(json_text As String) As String
         codeJS_Function = "function GetData (jstruct) {return jstruct.def[0].ts;}"
         get_transcription = parse_json(json_text, codeJS_Function)
 
-        If get_transcription <> "" Then     ' Если транскрипция существует, обрамляем ее квадратными скобаками
+        If get_transcription <> "" Then     ' Г…Г±Г«ГЁ ГІГ°Г Г­Г±ГЄГ°ГЁГЇГ¶ГЁГї Г±ГіГ№ГҐГ±ГІГўГіГҐГІ, Г®ГЎГ°Г Г¬Г«ГїГҐГ¬ ГҐГҐ ГЄГўГ Г¤Г°Г ГІГ­Г»Г¬ГЁ Г±ГЄГ®ГЎГ ГЄГ Г¬ГЁ
             get_transcription = "[" & get_transcription & "]"
         End If
 End Function
@@ -114,7 +114,7 @@ End Function
 Public Function get_synonim(TranslateWord As String, json_text As String) As String
     Dim Synonim$, codeJS_Function$
     Dim j&
-        'Если перевод слова есть, то выгружаем из json объекта синонимы
+        'Г…Г±Г«ГЁ ГЇГҐГ°ГҐГўГ®Г¤ Г±Г«Г®ГўГ  ГҐГ±ГІГј, ГІГ® ГўГ»ГЈГ°ГіГ¦Г ГҐГ¬ ГЁГ§ json Г®ГЎГєГҐГЄГІГ  Г±ГЁГ­Г®Г­ГЁГ¬Г»
         If TranslateWord <> "" Then
             For j = 0 To 50
                 On Error GoTo ExitFor
@@ -136,7 +136,7 @@ Public Function get_URL_of_audio(json_text As String) As Variant
         Dim j&
         Dim URL_arr() As Variant
         ReDim URL_arr(0)
-        'Если перевод слова есть, то выгружаем из json объекта синонимы
+        'Г…Г±Г«ГЁ ГЇГҐГ°ГҐГўГ®Г¤ Г±Г«Г®ГўГ  ГҐГ±ГІГј, ГІГ® ГўГ»ГЈГ°ГіГ¦Г ГҐГ¬ ГЁГ§ json Г®ГЎГєГҐГЄГІГ  Г±ГЁГ­Г®Г­ГЁГ¬Г»
             For j = 0 To 5
                 On Error GoTo ExitFor
                 codeJS_Function = "function GetData (jstruct) {return jstruct[0].phonetics[" & j & "].audio;}"
@@ -154,7 +154,7 @@ End Function
 '=============================================================================
 Private Function parse_json(textJsonFile$, codeJS_Function$) As String
     On Error Resume Next
-    'Работа с JSскрипт_________________________________________________________________________________________________
+    'ГђГ ГЎГ®ГІГ  Г± JSГ±ГЄГ°ГЁГЇГІ_________________________________________________________________________________________________
     Dim myJSCript As Object
     Set myJSCript = CreateObject("MSScriptControl.ScriptControl")
     With myJSCript
@@ -166,14 +166,14 @@ Private Function parse_json(textJsonFile$, codeJS_Function$) As String
     End With
 
     Set myJSCript = Nothing
-    Set objJson = Nothing    ' обнуляем переменные
+    Set objJson = Nothing    ' Г®ГЎГ­ГіГ«ГїГҐГ¬ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»ГҐ
 End Function
 
 '=============================================================================
 'Arrays
 '=============================================================================
-'1. Проверка наличия элемента массива в массиве.
-'true – элемент уже есть в массиве, false – элемента нет
+'1. ГЏГ°Г®ГўГҐГ°ГЄГ  Г­Г Г«ГЁГ·ГЁГї ГЅГ«ГҐГ¬ГҐГ­ГІГ  Г¬Г Г±Г±ГЁГўГ  Гў Г¬Г Г±Г±ГЁГўГҐ.
+'true вЂ“ ГЅГ«ГҐГ¬ГҐГ­ГІ ГіГ¦ГҐ ГҐГ±ГІГј Гў Г¬Г Г±Г±ГЁГўГҐ, false вЂ“ ГЅГ«ГҐГ¬ГҐГ­ГІГ  Г­ГҐГІ
 Function checkElementArr(arr() As Variant, elementArr$) As Boolean
     Dim countElementArr&, i&
     countElementArr = UBound(arr) - LBound(arr)
@@ -188,17 +188,17 @@ Function checkElementArr(arr() As Variant, elementArr$) As Boolean
     checkElementArr = False
 End Function
 
-'2. Функция добавляет в массив неповторяющиеся, уникальные значения
-Function Append(InArray() As Variant, Value As String)                          'InArray - массив, Value - элемент, который необходимо добавить к нему
+'2. Г”ГіГ­ГЄГ¶ГЁГї Г¤Г®ГЎГ ГўГ«ГїГҐГІ Гў Г¬Г Г±Г±ГЁГў Г­ГҐГЇГ®ГўГІГ®Г°ГїГѕГ№ГЁГҐГ±Гї, ГіГ­ГЁГЄГ Г«ГјГ­Г»ГҐ Г§Г­Г Г·ГҐГ­ГЁГї
+Function Append(InArray() As Variant, Value As String)                          'InArray - Г¬Г Г±Г±ГЁГў, Value - ГЅГ«ГҐГ¬ГҐГ­ГІ, ГЄГ®ГІГ®Г°Г»Г© Г­ГҐГ®ГЎГµГ®Г¤ГЁГ¬Г® Г¤Г®ГЎГ ГўГЁГІГј ГЄ Г­ГҐГ¬Гі
 
     If checkElementArr(InArray, Value) = False Then
         If InArray(0) <> "" Then
-            ReDim Preserve InArray(UBound(InArray) + 1)                         'увеличиваем размер массива с сохранением имеющихся в нём значений
-            InArray(UBound(InArray)) = Value                                    'дописываем Value в массив
+            ReDim Preserve InArray(UBound(InArray) + 1)                         'ГіГўГҐГ«ГЁГ·ГЁГўГ ГҐГ¬ Г°Г Г§Г¬ГҐГ° Г¬Г Г±Г±ГЁГўГ  Г± Г±Г®ГµГ°Г Г­ГҐГ­ГЁГҐГ¬ ГЁГ¬ГҐГѕГ№ГЁГµГ±Гї Гў Г­ВёГ¬ Г§Г­Г Г·ГҐГ­ГЁГ©
+            InArray(UBound(InArray)) = Value                                    'Г¤Г®ГЇГЁГ±Г»ГўГ ГҐГ¬ Value Гў Г¬Г Г±Г±ГЁГў
         Else
             InArray(0) = Value
         End If
     End If
 
-    Append = InArray                                                            'функция возвращает новый массив
+    Append = InArray                                                            
 End Function
